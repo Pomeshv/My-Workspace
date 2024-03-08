@@ -1,1 +1,191 @@
+create warehouse DEMO_WAREHOUSE;
+use warehouse DEMO_WAREHOUSE;
+
+create database DEMO_DATABASE;
+USE DATABASE DEMO_DATABASE;
+
+CREATE OR REPLACE TABLE shopping_history (
+      product varchar not null,
+      quantity integer not null,
+      unit_price integer not null
+);
+
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('milk',3,10);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('bread',7,3);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('Ice_Cream',6,10);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('dairy-milk',5,10);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('bread',5,3);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('cream-roll',6,12);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('dairy-milk',4,10);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('cheese',3,20);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('chips',7,10);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('sweets',5,50);
+INSERT INTO shopping_history(product,quantity,unit_price) VALUES ('bread',8,3);
+
+
+
+select (product),sum(quantity*unit_price) as total_spent
+from shopping_history
+group by product
+order by product desc;
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE TABLE phones (
+      name varchar(20) not null unique,
+      phone_number integer not null unique
+);
+
+CREATE OR REPLACE TABLE calls (
+     id integer not null,
+     caller integer not null,
+     callee integer not null,
+     duration integer not null,
+     unique(id)
+);
+
+
+INSERT INTO phones VALUES ('John',9865756267);
+INSERT INTO phones VALUES ('Riya', 9653476285);
+INSERT INTO phones VALUES ('Rocky', 9465287642);
+INSERT INTO phones VALUES ('Sonu', 92258321569);
+INSERT INTO phones VALUES ('Akol',95258645685);
+INSERT INTO phones VALUES ('Elui',9145863241)
+
+select * from phones;
+
+INSERT INTO calls VALUES (25,9865756267,92258321569,8);
+INSERT INTO calls VALUES (7,92258321569,9653476285,1);
+INSERT INTO calls VALUES (18,9465287642,95258645685 ,4);
+INSERT INTO calls VALUES (2, 9145863241,92258321569,3);
+INSERT INTO calls VALUES (3,95258645685,9465287642,1);
+INSERT INTO calls VALUES (21,9145863241,9653476285,1)
+select * from calls;
+
+
+SELECT name 
+FROM phones 
+WHERE phone_number IN (
+    SELECT caller 
+    FROM calls 
+    GROUP BY caller 
+    HAVING SUM(duration) >= 10
+)
+OR phone_number IN (
+    SELECT callee 
+    FROM calls 
+    GROUP BY callee 
+    HAVING SUM(duration) >= 10
+)
+ORDER BY name;
+
+----------------------------------------------------------------------------------
+CREATE OR REPLACE TABLE phones_new (
+      name varchar(20) not null unique,
+      phone_number integer not null unique
+);
+
+CREATE OR REPLACE TABLE calls_new (
+     id integer not null,
+     caller integer not null,
+     callee integer not null,
+     duration integer not null,
+     unique(id)
+);
+
+INSERT INTO phones_new VALUES('John',6356);
+INSERT INTO phones_new VALUES('Addison',4315);
+INSERT INTO phones_new VALUES('Kate',8003);
+INSERT INTO phones_new VALUES('Ginny',9831)
+
+INSERT INTO calls_new VALUES(65,8003,9831,7);
+INSERT INTO calls_new VALUES(100,9831,8003,3);
+INSERT INTO calls_new VALUES(145,4315,983,18)
+
+SELECT * FROM phones_new;
+SELECT * FROM calls_new;
+
+SELECT name
+FROM phones_new
+WHERE phone_number IN (
+    SELECT caller
+    FROM calls_new
+    GROUP BY caller
+    HAVING SUM(duration) >= 10
+)
+OR phone_number IN (
+    SELECT callee
+    FROM calls_new
+    GROUP BY callee
+    HAVING SUM(duration) >= 10
+)
+LIMIT 3;
+--------------------------------------------------------------------------------
+CREATE TABLE transactions(
+            amount integer not null,
+            date DATE not null
+);
+
+INSERT INTO transactions(amount,date) VALUES (1000,'2020-01-06');
+INSERT INTO transactions(amount,date) VALUES (-10,'2020-01-14');
+INSERT INTO transactions(amount,date) VALUES (-75,'2020-01-20');
+INSERT INTO transactions(amount,date) VALUES (-5,'2020-01-25');
+INSERT INTO transactions(amount,date) VALUES (-4,'2020-01-29');
+INSERT INTO transactions(amount,date) VALUES (2000,'2020-03-10');
+INSERT INTO transactions(amount,date) VALUES (-75,'2020-03-12');
+INSERT INTO transactions(amount,date) VALUES (-20,'2020-03-15');
+INSERT INTO transactions(amount,date) VALUES (40,'2020-03-15');
+INSERT INTO transactions(amount,date) VALUES (-50,'2020-03-17');
+INSERT INTO transactions(amount,date) VALUES (200,'2020-10-10');
+INSERT INTO transactions(amount,date) VALUES (-200,'2020-10-10');
+
+SELECT * FROM transactions;
+
+WITH MonthlyFees AS (
+    SELECT
+        EXTRACT(MONTH FROM date) AS month,
+        SUM(CASE WHEN amount < 0 THEN 5 ELSE 0 END) AS fees
+    FROM transactions
+    GROUP BY month
+    HAVING COUNT(CASE WHEN amount < 0 THEN 1 END) >= 3
+)
+SELECT
+    COALESCE(SUM(amount), 0) - COALESCE(SUM(fees), 0) AS balance
+FROM transactions
+LEFT JOIN MonthlyFees ON EXTRACT(MONTH FROM date) = month;
+------------------------------------------------------
+--2 
+CREATE TABLE transactions_2(
+            amount integer not null,
+            date DATE not null
+);
+
+INSERT INTO transactions_2(amount,date) VALUES (1,'2020-06-29');
+INSERT INTO transactions_2(amount,date) VALUES (35,'2020-02-20');
+INSERT INTO transactions_2(amount,date) VALUES (-50,'2020-02-03');
+INSERT INTO transactions_2(amount,date) VALUES (-1,'2020-02-26');
+INSERT INTO transactions_2(amount,date) VALUES (-200,'2020-08-01');
+INSERT INTO transactions_2(amount,date) VALUES (-44,'2020-02-07');
+INSERT INTO transactions_2(amount,date) VALUES (-5,'2020-02-25');
+INSERT INTO transactions_2(amount,date) VALUES (1,'2020-06-29');
+INSERT INTO transactions_2(amount,date) VALUES (1,'2020-06-29');
+INSERT INTO transactions_2(amount,date) VALUES (-100,'2020-12-29');
+INSERT INTO transactions_2(amount,date) VALUES (-100,'2020-12-30');
+INSERT INTO transactions_2(amount,date) VALUES (-100,'2020-12-31');
+
+select * from transactions_2;
+
+
+WITH MonthlyFees AS (
+    SELECT
+        EXTRACT(MONTH FROM date) AS month,
+        SUM(CASE WHEN amount < 0 THEN 5 ELSE 0 END) AS fees
+    FROM transactions_2
+    GROUP BY month
+    HAVING COUNT(CASE WHEN amount < 0 THEN 1 END) >= 3
+)
+SELECT
+    COALESCE(SUM(amount), 0) - COALESCE(SUM(fees), 0) AS balance
+FROM transactions_2
+LEFT JOIN MonthlyFees ON EXTRACT(MONTH FROM date) = month;
 

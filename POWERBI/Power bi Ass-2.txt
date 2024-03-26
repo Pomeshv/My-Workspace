@@ -190,4 +190,4 @@ A.6. Certainly! Power BI Desktop provides a wide range of data sources for your 
 19. **Amazon Redshift**: Connect to Redshift clusters.
 20. **Google BigQuery**: Import data from Google BigQuery.
 
-Remember that some connectors may require enabling through the **Preview Features** settings. Additionally, be cautious with any data sources marked as **Beta or Preview**, as they have limited support and functionality and should not be used in production environments¹³.
+Some connectors may require enabling through the **Preview Features** settings. Additionally, be cautious with any data sources marked as **Beta or Preview**, as they have limited support and functionality and should not be used in production environments¹³.

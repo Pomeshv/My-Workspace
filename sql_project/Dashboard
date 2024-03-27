@@ -5,12 +5,12 @@ update automatically in power BI.
 
 Power BI Dashboard = 
 
-FOllowing steps are required >>>>
+Following steps are required >>>>
 
 Excel > AWS > Snowflake > Power BI
 
-Step 1[in MS Excel] :
-# Basic Data CLeaning
+Step 1 [in MS Excel] :
+# Basic Data CLeaning.
 # Change File Type to CSV format.
 
 Step2 [AWS] :
@@ -33,14 +33,14 @@ Step 4 [Power BI]:
 
 Here is the Snowflake SQL data cleaning code.
 
-#Data cleaning in snowflake with sql Worksheet.
+# Data cleaning in snowflake with sql Worksheet.
 
 
-#Create a district table.
+# Create a district table.
 
 CREATE OR REPLACE TABLE district 
 (
-District_code INt Primary key,
+District_code INT Primary key,
 District_Name VARCHAR(100),
 Region VARCHAR(100),
 No_of_inhabitants INT,
@@ -57,7 +57,7 @@ No_of_committed_crime_2018 INT
 );
 
 
-#create account table.
+# create account table.
 
 CREATE OR REPLACE TABLE ACCOUNT
 (
@@ -69,7 +69,7 @@ account_type VARCHAR(100),
 card_assigned VARCHAR(20)
 );
 
-#create card table.
+# create card table.
 
 CREATE OR REPLACE TABLE card
 (
@@ -80,7 +80,7 @@ issued DATE,
 FOREIGN KEY (disp_id) REFERENCES Disposition(disp_id)
 );
 
-#create client table.
+# create client table.
 
 CREATE OR REPLACE TABLE client
 (
@@ -91,13 +91,13 @@ district_id INT,
 foreign key(district_id) references district(district_code)
 );
 
-#create loan table.
+# create loan table.
 
 Create or replace table loan
 (
 loan_id INT,
 account_id INT,
-Date varchar,
+Date VARCHAR,
 amount INT,
 duration INT,
 paymrnts INT,
@@ -105,7 +105,7 @@ status VARCHAR(35),
 FOREIGN KEY (account_id) references ACCOUNT(account_id)
 );
 
-#create transactions table.
+# create transactions table.
 
 CREATE OR REPLACE TABLE transactions
 (
@@ -122,7 +122,7 @@ account_partner_id INT,
 Foreign key (account_id) references ACCOUNT(account_id) 
 );
 
-#create table order_
+# create table order_
 
 CREATE OR REPLACE TABLE ORDER_
 (
@@ -146,7 +146,7 @@ FOREIGN KEY(account_id) references ACCOUNT(account_id),
 FOREIGN KEY(client_id) references CLIENT(client_id)
 );
 
-#create storage_integration "s3_int" for loading the data into AWS to snowflake.
+# create storage_integration "s3_int" for loading the data into AWS to snowflake.
 
 CREATE OR REPLACE STORAGE integration s3_int
 TYPE = EXTERNAL_STAGE
@@ -157,8 +157,7 @@ STORAGE_ALLOWED_LOCATIONS = ('s3://myczechbankdatap/');
 
 DESC integration s3_int;
 
-#Create stage bank "BANK"
-
+# Create stage bank "BANK":
 create or replace STAGE BANK
 URL = 's3://myczechbankdatap'
 file_format = CSV
@@ -169,7 +168,6 @@ LIST @BANK;
 SHOW STAGES;
 
 #Create a file format.
-
 CREATE FILE FORMAT CSV1
 TYPE = CSV
 FIELD_DELIMITER = ','
@@ -248,8 +246,10 @@ select* from  ORDER_;
 select* from  LOAN;
 select* from CLIENT;
 ------------------------------------------------------------------------------------------------------------
-### data cleaning
-#FINDING NULL VALUES IN BANK DATASET
+### data cleaning:
+
+# FIRST ,WE FINDING NULL VALUES IN BANK DATASET,
+
 SELECT * FROM TRANSACTIONS WHERE BANK IS NULL AND YEAR(DATE) = '2016';
 
 SELECT YEAR(DATE) AS TXN_YEAR, COUNT(*) AS TOT_TXNS
@@ -261,29 +261,29 @@ ORDER BY 2 DESC;
 SELECT YEAR(DATE) AS TXN_YEAR, COUNT(*) AS TOT_TXNS
 FROM TRANSACTIONS
 GROUP BY 1
-ORDER BY2 DESC;
+ORDER BY 2 DESC;
 
 SELECT DISTINCT YEAR(DATE), COUNT(*) 
 FROM ACCOUNT
 GROUP BY 1
-ORDER BY1 DESC;
+ORDER BY 1 DESC;
 
 
 SELECT DISTINCT YEAR(DATE) 
 FROM TRANSACTIONS 
 ORDER BY 1;
 
--- 1CZK = 0.46735 USD
--- 1CZK = 3.836706 IND
+### UPDATE TABLE TRANSACTIONS.
 
-### UPDATE TABLE TRANSACTIONS
 /*
- CONVERT 2021 TXN_YEAR TO 2022
- CONVERT 2020 TXN_YEAR TO 2021
- CONVERT 2018 TXN_YEAR TO 2020
- CONVERT 2017 TXN_YEAR TO 2019
- CONVERT 2016 TXN_YEAR TO 2018
+ CONVERTING 2021 TXN_YEAR TO 2022
+ CONVERTING 2020 TXN_YEAR TO 2021
+ CONVERTING 2018 TXN_YEAR TO 2020
+ CONVERTING 2017 TXN_YEAR TO 2019
+ CONVERTING 2016 TXN_YEAR TO 2018
 */
+
+
 UPDATE TRANSACTIONS
 SET DATE = DATEADD(YEAR,1,DATE)
 WHERE YEAR(DATE) = 2021;
@@ -300,10 +300,10 @@ WHERE YEAR(DATE) = 2017;
 SET DATE = DATEADD(YEAR,2,DATE)
 WHERE YEAR(DATE) = 2016;
 
-SELECT MIN(DATE),MAX(DATE) FROM TRANSACTIONS;
+SELECT MIN(DATE), MAX(DATE) FROM TRANSACTIONS;
 
 UPDATE TRANSACTIONS
-SET BANK  'SKY_BANK' WHERE BANK IS NULL AND YEAR(DATE) = 2022;
+SET BANK 'SKY_BANK' WHERE BANK IS NULL AND YEAR(DATE) = 2022;
 
 UPDATE TRANSACTIONS
 SET BANK = 'NORTHERN BANK' WHERE BANK IS NULL AND YEAR(DATE) = 2020;
@@ -314,13 +314,14 @@ SET BANK = 'SOUTHERN BANK' WHERE BANK IS NULL AND YEAR(DATE) = 2019;
 UPDATE TRANSACTIONS
 SET BANK = 'ADB BANK' WHERE BANKIS NULL AND YEAR(DATE) = 2018;
 
-SELECT * FROM TRANSACTIONS WHERE BANK IS NULLAND YEAR(DATE) = 2018;
+SELECT * FROM TRANSACTIONS WHERE BANK IS NULL AND YEAR(DATE) = 2018;
 
 SELECT * FROM TRANSACTIONS WHERE BANK = NULL;
 
 SELECT DISTINCT YRAR(ISUED) FROM CARD;
 
 -- ADDING AGE COLUMN TO THE CLIENT TABLE
+
 ALTER TABLE CLIENT
 ADD COLUMN AGE INT;
 
@@ -328,32 +329,35 @@ UPDATE CLIENT
 SET AGE = DATEDIFF('YEAR', BIRTH_DATE, '2022-12-19');
 
 -- CARD TABLE UPDATE
+
 SELECT * FROM CARD;
 SELECT TYPE FROM CARD WHERE YEAR(ISUED) = 2022;
 
 SELECT DISTINCT YEAR(ISSUED) FROM CARD;
 
 UPDATE CARD
-SET ISSUED =DATEADD(YEAR,1,ISSUED)
+SET ISSUED = DATEADD(YEAR,1,ISSUED)
 WHERE YEAR(ISSUED) = 2016;
 
 SELECT * FROM ACCOUNT;
 SELECT DISTINCT YEAR(DATE) FROM ACCOUNT;
 
--- FINDING MALE AND FEMALE --
+-- FINDING MALE AND FEMALE 
+
 SELECT 
 SUM(CASE WHEN SEX = 'MALE' THEN 1 ELSE 0 END)/ COUNT(*) * 100.0 AS MALE_PERCENTAGE,
-SUM(CASE WHEN SEX = 'FEMALE' THEN 1 ELSE 0 END)/COUNT(*)*100.0 AS FEMALE_PERCENTAGE
+SUM(CASE WHEN SEX = 'FEMALE' THEN 1 ELSE 0 END)/ COUNT(*)*100.0 AS FEMALE_PERCENTAGE
 FROM CLIENT;
 
--- FINDING MALE FEMALE PERCENTAGE % --
+-- FINDING MALE FEMALE PERCENTAGE % 
+
 SELECT 
 SUM(CASE WHEN SEX = 'MALE' THEN 1 ELSE 0 END)/COUNT(*)*100.0 AS MALE_PERCENTAGE,
 SUM(CASE WHEN SEX = 'FEMALE' THEN 1 ELSE 0 END)/COUNT(*)*100.0 AS FEMALE_PERCENTAGE
 FROM CLIENT;
 
--- 
--- ADDING AGE COLUMN TO THE CLIENT TABLE.
+---- ADDING AGE COLUMN TO THE CLIENT TABLE.
+
 ALTER TABLE CLIENT
 ADD COLUMN AGE INT;
 
@@ -362,7 +366,8 @@ SET AGE  = DATEDIFF('YEAR', BIRTH_DATE,'2022-12-19');
 
 
 
--- 1.What is the demographic profile of the bank's clients and how does it vary across districts?.
+-- 1.What is the demographic profile of the bank's clients and how does it vary across districts?
+
 create or replace table czec_demographic_data_kpi as
 SELECT  C.DISTRICT_ID,D.DISTRICT_NAME,D.AVERAGE_SALARY,
 ROUND(AVG(C.AGE),0) AS AVG_AGE,
@@ -377,7 +382,8 @@ ORDER BY 1;
 
 select * from czec_demographic_data_kpi ;
 
--- 2. How the banks have performed obver the years.Give their detailed analysis month wise?
+-- 2. How the banks have performed over the years. Give their detailed analysis month wise?
+
 SELECT * FROM ACC_LATEST_TXNS_WITH_BALANCE ;
 
 SELECT LATEST_TXN_DATE,COUNT(*) AS TOT_TXNS

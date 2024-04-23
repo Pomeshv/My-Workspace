@@ -1,0 +1,19 @@
+Category,Type of inference,Description,Inference
+Career inferences,Likelihood to be a marketer,Based on your profile and other factors.,0.0
+Career inferences,Small or medium sized business owner,"Based on your current company on your profile, your job title, and other factors.",No
+Career inferences,Human resources professional,Based on factors such as your industry and profile headline.,No
+Career inferences,Student,Based on your education on your profile and other factors.,No
+Career inferences,Senior leader,Executive leader at your company. Based on your experience on your profile and other factors.,No
+Career inferences,People leader,People leader at your company. Based on your experience on your profile and other factors.,No
+Career inferences,Job seeker,Based on your activity on LinkedIn and other factors.,No
+Career inferences,Recruiter,Based on factors such as your experience and profile headline.,No
+Career inferences,Early stage of career,Early stage of career but not a student. Based on factors such as your industry and experience on your profile.,No
+Career inferences,Sales professional,Based on factors such as your experience and profile headline.,No
+Career inferences,Growth stage of career,Based on factors such as your industry and experience on your profile.,Yes
+Inferred interests,Interested in oil and energy industry,Based on whether you follow companies in the oil and energy industry.,true
+Inferred interests,Interested in higher education,Based on whether you follow companies in the higher education industry.,true
+Inferred interests,Interested in media about technology,"Interested in technology media outlets, such as Venturebeat, Ted Conferneces, Wired, TechCrunch, Gizmodo, Engadget, Mashable, PCMag, Fast Company, Popular Science, The Verge, and Tech Dirt. Based on factors such as companies followed.",true
+Job search inferences,Interested in a new job,Based on whether you searched for a job or clicked on a posting in the past 30 days.,true
+LinkedIn Sales Solutions (LSS) inferences,Interested in Sales Navigator product in Latin America,"Likely to fill out a Contact me sheet to purchase Sales Navigator and living in Latin America. Based on factors such as your location, experience, and industry on your profile.",true
+LinkedIn Sales Solutions (LSS) inferences,Interested in Sales Navigator product in North America,"Likely to fill out a Contact me sheet to purchase Sales Navigator and living in North America. Based on factors such as your location, experience, and industry on your profile.",true
+LinkedIn activity inferences,Active contributor who influences public opinion,"Active contributor on LinkedIn, such as in feed and in groups, who regularly influences public opinion and public policy. Based on factors such as your experience, industry, and activity in groups.",true

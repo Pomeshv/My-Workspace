@@ -1,0 +1,581 @@
+USE RETAILS; --using Warehouse
+
+
+---------------------------------------------------------           Checking Attributes           ---------------------------------------------------------------------------
+SELECT * FROM demographic_RAW; --Checking Attributes
+SELECT * FROM CAMPAIGN_DESC_RAW;
+SELECT * FROM CAMPAIGN_RAW;
+SELECT * FROM PRODUCT_RAW;
+SELECT * FROM COUPON_RAW;
+SELECT * FROM COUPON_REDEMPT_RAW;
+SELECT * FROM TRANSACTION_RAW;
+
+
+select * from CAMPAIGN_DESC_NEW; 
+
+select * from COUPON_REDEMPT_NEW;
+
+select * from TRANSACTION_NEW;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------EDA FOR TRANSACTION NEW TABLE------------------------------------------------------------------------------------
+
+SELECT * FROM TRANSACTION_NEW LIMIT 1; --alter_check_the_table
+
+ALTER TABLE TRANSACTION_NEW 
+DROP COLUMN WEEK_NO ; -- REMOVED WEEK_NO COLUMN instantly
+
+SELECT COUNT(BASKET_ID) FROM TRANSACTION_NEW; --  TOTAL BASKET ID will be 450416.
+SELECT COUNT(DISTINCT BASKET_ID) FROM TRANSACTION_NEW; --  UNIQUE ID will be 50478.
+
+SELECT COUNT (DISTINCT HOUSEHOLD_KEY ) FROM TRANSACTION_NEW ;  --UNIQUE HouseholdKey will be 2494.
+
+SELECT BASKET_ID , SUM(SALES_VALUE) , SUM(COUPON_DISC) , SUM(COUPON_MATCH_DISC)
+FROM TRANSACTION_NEW 
+GROUP BY 1 
+ORDER BY 2 DESC; -- Basket ID 32006114302, 40387571385, 33347880492 with Highest Sales_value 961.49, 681.58, 552.92
+                 -- Basket ID 
+
+SELECT COUNT( DISTINCT BASKET_ID) FROM TRANSACTION_NEW 
+WHERE COUPON_DISC <> 0;  -- ONLY 2587 COUPON ARE USED  
+
+SELECT ROUND(SUM(SALES_VALUE)/COUNT(DISTINCT BASKET_ID)) AS Average_Basket_Sales FROM TRANSACTION_NEW ;
+-- THE AVERAGE BASKET SALES VALUE IS $28.93 OR $29
+
+SELECT * FROM TRANSACTION_NEW
+ORDER BY RETAIL_DISC ;
+
+
+SELECT ROUND(SUM(SALES_VALUE)/COUNT(DISTINCT BASKET_ID)) 
+FROM TRANSACTION_NEW
+WHERE COUPON_DISC != 0 ;
+
+
+SELECT ROUND(SUM(SALES_VALUE)/COUNT(DISTINCT BASKET_ID)) 
+FROM TRANSACTION_NEW
+WHERE COUPON_DISC = 0 ;
+
+SELECT  COUNT(DISTINCT BASKET_ID) FROM TRANSACTION_NEW 
+WHERE COUPON_DISC = 0 ;--50403  
+
+SELECT  COUNT(DISTINCT BASKET_ID) FROM TRANSACTION_NEW 
+WHERE COUPON_DISC <> 0 ;--2587
+
+SELECT AVG(SALES_VALUE) FROM TRANSACTION_NEW 
+WHERE COUPON_DISC = 0 ;  --$3
+SELECT AVG(SALES_VALUE) FROM TRANSACTION_NEW 
+WHERE COUPON_DISC <> 0 ; --$4
+
+SELECT * FROM PRODUCT_RAW P
+FULL OUTER JOIN TRANSACTION_NEW T 
+ON P.PRODUCT_ID = T.PRODUCT_ID ;
+
+SELECT DISTINCT COMMODITY_DESC , COUNT (COMMODITY_DESC)
+FROM PRODUCT_RAW
+GROUP BY 1 
+ORDER BY 2 DESC;
+
+SELECT HOUSEHOLD_KEY , SUM(SALES_VALUE) , SUM(COUPON_DISC) , SUM(COUPON_MATCH_DISC)
+FROM TRANSACTION_NEW
+GROUP BY 1 
+ORDER BY 3 , 2 DESC;
+
+SELECT DISTINCT MONTH(DATE) 
+FROM TRANSACTION_NEW;
+
+----------------------------------------------------------  deparment wise total product count.  ------------------------------------------------------------------------------------
+
+SELECT DISTINCT(DEPARTMENT),COUNT(*) AS TOTAL_PRODUCT 
+FROM PRODUCT_RAW
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+--------------------------------------------------  /*1.	Customer Demographics KPIs: -----------------------------------------------------------------------------------------
+A. Count of unique households: Measure the total number of unique households in the Demographic table.
+B. Household composition distribution: Analyze the distribution of household compositions (HH_COMP_DESC) to understand the composition of households.
+C.	Age distribution: Calculate the percentage or count of customers in different age groups (AGE_DESC).
+D.	Marital status distribution: Analyze the proportion of customers in different marital status categories (MARITAL_STATUS_CODE).
+E.	Income distribution: Determine the distribution of customers across income levels (INCOME_DESC).
+F. Homeownership distribution: Calculate the percentage or count of customers who own or rent their homes (HOMEOWNER_DESC).*/
+
+SELECT COUNT(DISTINCT HOUSEHOLD_KEY) AS TOTAL_UNIQUE_HOUSEHOLDS FROM DEMOGRAPHIC_RAW; --2,500
+-- the total number of unique households in the Demographic table is 2500.
+
+SELECT HH_COMP_DESC as Household_composition_distribution ,COUNT(DISTINCT HOUSEHOLD_KEY) AS TOTAL_HOUSEHOLDS 
+FROM DEMOGRAPHIC_RAW
+GROUP BY 1
+ORDER BY 2 DESC;
+--Household composition distribution will be 6 types and they are different numbers.
+--There are 2500 distinct households out of which 800 households have 2 adults with no kids
+--followed by 584 households having 2 adult kids and 149 households have only 1 adult kid.
+--901 households fall under the age category of 45-54 which is 36% of the total population.
+--followed  by 594 households fall under age 35-44 which is 23% . only 143 (5.7%) households fall under 19 -24 age category.
+--1087 households are unmarried which is 43.48% of the total population,1052 households are
+--married which is 42% and rest 361 (14%) households are divorced 
+--588 households have income between 50-74k which is 23.5% of the total households , followed 
+--by 540 households between 35-49k  i.e  21.6% . Only 44 households make more than 200k which is only 1.72% . 
+--1573 households are homeowners that is 63 % of total population have their own house only 132 households 
+--are renters which is only 5.28% . 
+
+SELECT AGE_DESC,TOTAL_HOUSEHOLDS,ROUND(TOTAL_HOUSEHOLDS/2500 * 100,2) AS PERC_AGEWISE_HOUSEHOLDS_DISTR
+FROM (SELECT AGE_DESC,
+COUNT(DISTINCT HOUSEHOLD_KEY) AS TOTAL_HOUSEHOLDS
+FROM demographic_RAW 
+GROUP BY 1
+ORDER BY 2 DESC)
+GROUP BY 1,2;
+-- Age Distribution will be different groups between 19 to 54 based on percentage.
+
+
+SELECT MARITAL_STATUS_CODE ,COUNT(DISTINCT HOUSEHOLD_KEY) AS TOTAL_HOUSEHOLDS,ROUND(COUNT(DISTINCT HOUSEHOLD_KEY) / 2500 * 100 , 2) AS PERC_MARITAL_HOUSEHOLDS_DISTR
+FROM demographic_RAW
+GROUP BY 1
+ORDER BY 2 DESC;
+-- Marital status distribution U,A & B with total and percentage.
+
+SELECT INCOME_DESC , 
+COUNT(DISTINCT HOUSEHOLD_KEY) AS TOTAL_HOUSEHOLDS,
+ROUND(COUNT(DISTINCT HOUSEHOLD_KEY) / 2500 * 100 , 2) AS PERC_INCOME_HOUSEHOLDS_DISTR
+FROM demographic_RAW
+GROUP BY 1
+ORDER BY 2 DESC;
+
+SELECT HOMEOWNER_DESC , 
+COUNT(DISTINCT HOUSEHOLD_KEY) AS TOTAL_HOUSEHOLDS,
+ROUND(COUNT(DISTINCT HOUSEHOLD_KEY) / 2500 * 100 , 2) AS PERC_HOMEOWNER_DESC_DISTR
+FROM demographic_RAW
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+--------------------------------------------------------- Demographic Houshold KPI ----------------------------------------------------------------------------------
+SELECT T.HOUSEHOLD_KEY,D.AGE_DESC,D.MARITAL_STATUS_CODE,D.INCOME_DESC,AVG(T.SALES_VALUE)AS AVG_AMOUNT,
+AVG(T.RETAIL_DISC)AS AVG_RETAIL_DIS,AVG(T.COUPON_DISC)AS AVG_COUPON_DISC,AVG(T.COUPON_MATCH_DISC)AS AVG_COUP_MATCH_DISC
+FROM TRANSACTION_NEW T
+LEFT OUTER JOIN demographic_RAW D ON T.HOUSEHOLD_KEY =D.HOUSEHOLD_KEY
+GROUP BY 1,2,3,4
+ORDER BY 1;
+---------------------------------------------------------- Stored Procedure For Household KPI ------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE Household_kpi()
+RETURNS STRING
+LANGUAGE SQL
+AS
+$$
+ CREATE OR REPLACE TABLE Household_kpi AS (SELECT T.HOUSEHOLD_KEY,D.AGE_DESC,D.MARITAL_STATUS_CODE,D.INCOME_DESC,AVG(T.SALES_VALUE)AS AVG_AMOUNT,
+AVG(T.RETAIL_DISC)AS AVG_RETAIL_DIS,AVG(T.COUPON_DISC)AS AVG_COUPON_DISC,AVG(T.COUPON_MATCH_DISC)AS AVG_COUP_MATCH_DISC
+FROM TRANSACTION_NEW T
+LEFT OUTER JOIN demographic_RAW D ON T.HOUSEHOLD_KEY =D.HOUSEHOLD_KEY
+GROUP BY 1,2,3,4
+ORDER BY 1);
+$$;
+
+SHOW PROCEDURES;
+
+CALL Household_kpi();
+----------------------------------------------------------------- Creating Task ---------------------------------------------------------------------------------------------------
+CREATE OR REPLACE TASK  Household_kpi_TASK
+WAREHOUSE = COMPUTE_WH
+SCHEDULE = '12 MINUTE' 
+AS CALL Household_kpi();
+
+SHOW TASKS;
+
+ALTER TASK   Household_kpi_TASK RESUME;
+ALTER TASK  Household_kpi_TASK SUSPEND; 
+
+select * from Household_kpi;
+
+-----------------------------------------------------------------  /*Campaign KPIs:  -------------------------------------------------------------------------------------------
+A. Number of campaigns: Count the total number of campaigns in the Campaign table.
+B. Campaign duration: Calculate the duration of each campaign by subtracting the start day from the end day (in the Campaign_desc table).
+C. Campaign effectiveness: Analyze the number of households associated with each campaign (in the Campaign table) to measure campaign reach */
+
+SELECT * FROM CAMPAIGN_RAW;
+
+select description,
+from campa;
+
+-- A. Number of campaigns: Count the total number of campaigns in the Campaign table.
+
+SELECT COUNT(DISTINCT CAMPAIGN) AS TOTAL_NO_OF_CAMPAIGNS FROM CAMPAIGN_DESC_RAW; --7208 CAMPAIGNS IN CAMPAIGNS TABLES & 30 UNIQUE CAMPAOGNS
+
+SELECT * FROM CAMPAIGN_DESC_RAW;
+
+-- B. Campaign duration: Calculate the duration of each campaign by subtracting the start day from the end day (in the Campaign_desc table).
+SELECT CAMPAIGN, DATEDIFF(D,START_DATE,END_DATE) AS CAMPAIGNDURATION 
+FROM CAMPAIGN_DESC_NEW 
+ORDER BY 2 DESC ;
+
+-- C. Campaign effectiveness: Analyze the number of households associated with each campaign (in the Campaign table) to measure campaign reach.
+
+SELECT CAMPAIGN , COUNT(DISTINCT HOUSEHOLD_KEY) FROM CAMPAIGN_RAW 
+GROUP BY 1 
+ORDER BY 2 DESC ;
+
+
+CREATE OR REPLACE TABLE description_sales_value AS
+SELECT 
+    c.description, 
+    SUM(tr.sales_value) AS total_sales_value
+FROM 
+    campaign_raw c
+INNER JOIN 
+    transaction_new tr
+ON 
+    c.household_key = tr.household_key
+GROUP BY 
+    c.description
+ORDER BY 
+    total_sales_value DESC;
+
+select * from description_sales_value;
+
+CREATE OR REPLACE TABLE CAMPAIGN_SALES_TOTAL AS
+SELECT DISTINCT(CA.HOUSEHOLD_KEY),SUM(TN.SALES_VALUE) AS SALES_OF_TOTAL FROM CAMPAIGN_RAW CA
+LEFT OUTER JOIN TRANSACTION_RAW TN
+ON CA.HOUSEHOLD_KEY = TN.HOUSEHOLD_KEY 
+GROUP BY CA.HOUSEHOLD_KEY
+ORDER BY SALES_OF_TOTAL DESC ;
+
+
+-- CAMPAIGN 18 HAS THE MAXIMUM REACH OF 1133 HOUSES FOLLOWED BY CAMPAIGN13 WITH 1077HPUSEHOLDS AND CAMPAIGN 8 WITH 1076 HOUSEHOLDS.
+
+------------------------------------------------------------------  /*Coupon KPIs:  ----------------------------------------------------------------------------------------------
+A. Coupon redemption rate: Calculate the percentage of coupons redeemed (from the 
+coupon_redempt table) compared to the total number of coupons distributed (from 
+the Coupon table).
+B. Coupon usage by campaign: Measure the number of coupon redemptions (from 
+the coupon_redempt table) for each campaign (in the Coupon table).*/
+
+--A.
+SELECT * FROM COUPON_RAW;
+SELECT * FROM COUPON_REDEMPT_RAW;
+SELECT COUNT(DISTINCT COUPON_UPC) FROM COUPON_RAW; --1135
+SELECT COUNT(DISTINCT COUPON_UPC) FROM COUPON_REDEMPT_NEW; --556
+
+SELECT ROUND(COUNT(DISTINCT CR.COUPON_UPC) / COUNT(DISTINCT C.COUPON_UPC)*100,2) AS PERCENTAGE_COUPON_REDEMMED FROM COUPON_RAW C
+LEFT OUTER JOIN COUPON_REDEMPT_NEW CR
+ON C.COUPON_UPC = CR.COUPON_UPC;
+--48.99 % OF COUPONS WAS REDEMMED.
+
+--B.
+SELECT C.CAMPAIGN,COUNT(DISTINCT CR.COUPON_UPC) AS COUPON_REDEMMED
+FROM COUPON_REDEMPT_NEW AS CR
+INNER JOIN COUPON_RAW AS C
+ON C.COUPON_UPC = CR.COUPON_UPC
+GROUP BY 1
+ORDER BY 2 DESC ; 
+-- 136 COUPON REDEEMED FOR CAMPAIGN 13 , 124 FOR CAMPAIGN 18 
+-- AND CAMPAIGN 8 HAS 115  COUPONS REEDEMED .
+-- 1 , 15 , 24 AND 6 CAMPAIGNS HAD THE LEAST COUPONS REEDEMED.
+SELECT * FROM COUPON_RAW LIMIT 1 ;
+SELECT * FROM COUPON_REDEMPT_NEW LIMIT 1 ;
+
+----------------------------------------------------------  /*Product KPIs:  --------------------------------------------------------------------------------------------------
+A. Sales value: Calculate the total sales value for each product (in the 
+Transaction_data table) to identify top-selling products.
+B. Manufacturer distribution: Analyze the distribution of products across different 
+manufacturers (in the Product table).
+C. Department-wise sales: Measure the sales value by department (in the Product 
+table) to understand which departments contribute most to revenue.
+D. Brand-wise sales: Calculate the sales value for each brand (in the Product table) to 
+identify top-selling brands. */
+
+--A. 
+SELECT P.COMMODITY_DESC AS PRODUCT_DESC, SUM(T.SALES_VALUE) AS TOTAL_SALES
+FROM PRODUCT_RAW AS P
+INNER JOIN TRANSACTION_NEW AS T
+ON P.PRODUCT_ID = T.PRODUCT_ID
+GROUP BY 1 
+ORDER BY 2 DESC;
+
+-- TOP 3 SELLING PROUCTS ARE:
+-- COUPON/MISC ITEMS  WITH SALES OF   $93573.7,
+-- SOFT DRINKS WITH SALES OF $61407.76 ,
+-- BEEF  WITH SALES OF $57303.19.
+
+SELECT * FROM RETAILS.PUBLIC.PRODUCT_RAW ; 
+SELECT * FROM RETAILS.PUBLIC.TRANSACTION_NEW ; 
+
+
+--B.
+SELECT MANUFACTURER, COUNT (DISTINCT PRODUCT_ID) AS DIST_OF_PRODUCT
+FROM PRODUCT_RAW
+GROUP BY 1
+HAVING COUNT (DISTINCT PRODUCT_ID) > 1000
+ORDER BY 2 DESC ; 
+-- MANUFACTURER 69 SELLS HIGHEST 12,676 PRODUCTS,
+-- MANUFACTURER 2 SELLS 1411,
+-- MANUFACTURER 5423 SELLS 1376.
+
+-- C.
+SELECT P.DEPARTMENT, ROUND(SUM(T.SALES_VALUE)) SALES_VALUES
+FROM PRODUCT_RAW AS P
+INNER JOIN TRANSACTION_NEW AS T
+ON P.PRODUCT_ID = T.PRODUCT_ID
+GROUP BY 1
+ORDER BY 2 DESC ; 
+-- GROCERY DEPARTMENT HAS THE HIGHEST SALES WITH $694,540 ,
+-- DRUG GM DEPARTMENT  HAS SALES OF $179,496,
+-- MEAT DEPARTMENT HAS SALES OF $97,348.
+
+-- D.
+SELECT P.BRAND, ROUND(SUM(T.SALES_VALUE)) AS TOTAL_SALES, 
+FROM PRODUCT_RAW AS P
+INNER JOIN TRANSACTION_NEW AS T
+ON P.PRODUCT_ID = T.PRODUCT_ID
+GROUP BY 1
+ORDER BY 2 DESC;
+-- NATIONAL HAS SALES OF $1000456 AND PRIVATE HAS SALES OF $359096
+
+ ---------------------------------------------------------------  /* Transaction KPIs:  ------------------------------------------------------------------------------------------
+A. Total sales value: Calculate the sum of sales values (in the Transaction_data table) 
+to measure overall revenue.
+B. Average transaction value: Calculate the average sales value per transaction to 
+understand customer spending patterns.
+C. Quantity sold: Measure the total quantity sold (in the Transaction_data table) to 
+understand product demand.
+D. Discounts: Analyze the amount and impact of discounts (RETAIL_DISC, 
+COUPON_DISC, COUPON_MATCH_DISC) on sales value. */
+
+-- A.
+SELECT SUM(SALES_VALUE) AS TOTAL_SALES 
+FROM TRANSACTION_NEW;
+--TOTAL OVER ALL SALES ARE $ 1,359,551.73.
+
+-- B.
+SELECT AVG(SALES_VALUE) AS AVG_SALES_VALUE FROM TRANSACTION_NEW;
+-- $3.01 IS THE AVG TRANSACTION VALUES.
+
+-- C.
+SELECT P.DEPARTMENT, SUM(T.QUANTITY) AS TOTAL_QUANTITY_SOLD
+FROM TRANSACTION_NEW AS T
+INNER JOIN PRODUCT_RAW AS P
+ON P.PRODUCT_ID = T.PRODUCT_ID
+GROUP BY 1
+ORDER BY 2 DESC;
+-- KIOK GAS HAS THE MAXIMUM QUANTITY SOLD WITH 33104827 ,
+-- MISC SALES TRAN HAS  5287965
+-- GROCERY IS 3RD HIGHEST WITH 372201 OF QUANTITY BEING SOLD .
+-- CNTRL/STORE SUP IS LEAST WITH 0 QUANTITY BEING SOLD .
+
+-- D.
+SELECT PRODUCT_ID, SUM(SALES_VALUE), SUM(RETAIL_DISC), SUM(COUPON_DISC), SUM(COUPON_MATCH_DISC)
+FROM TRANSACTION_NEW
+GROUP BY 1
+ORDER BY 3 ;
+-- THE SALES VALUE INCREASES WHEN THE RETAIL AND COUPON DISCOUNTS ARE GIVEN TO THE CUSTOMERS 
+
+---------------------------------------------------------- CREATING MASTER TABLE ------------------------------------------------------------------------------------------------
+CREATE OR REPLACE TABLE MASTER_RETAIL_ANALSYS AS SELECT T.HOUSEHOLD_KEY,D.AGE_DESC,D.MARITAL_STATUS_CODE,D.INCOME_DESC,AVG(T.SALES_VALUE)AS AVG_AMOUNT,
+AVG(T.RETAIL_DISC)AS AVG_RETAIL_DIS,AVG(T.COUPON_DISC)AS AVG_COUPON_DISC,AVG(T.COUPON_MATCH_DISC)AS AVG_COUP_MATCH_DISC
+FROM TRANSACTION_NEW T
+LEFT OUTER JOIN DEMOGRAPHIC_RAW D ON T.HOUSEHOLD_KEY =D.HOUSEHOLD_KEY
+GROUP BY 1,2,3,4
+ORDER BY 1;
+
+SELECT * FROM MASTER_RETAIL_ANALSYS ;
+-
+-------------------------- Data Modifications --------------------------------------------
+ALTER TABLE DEMOGRAPHIC_RAW
+ADD COLUMN MARITAL_STATUS VARCHAR(50);
+
+UPDATE DEMOGRAPHIC_raw
+SET  MARITAL_STATUS = 'Married'
+WHERE MARITAL_STATUS_CODE = 'A' ;
+
+UPDATE DEMOGRAPHIC_RAW
+SET MARITAL_STATUS = 'Unmarried'
+WHERE MARITAL_STATUS_CODE = 'U' ; 
+
+UPDATE DEMOGRAPHIC_RAW
+SET  MARITAL_STATUS = 'Divorced'
+WHERE MARITAL_STATUS_CODE = 'B';        
+
+SELECT * FROM DEMOGRAPHIC_RAW LIMIT 1;
+
+SELECT DISTINCT HH_COMP_DESC FROM DEMOGRAPHIC_RAW ;
+
+SELECT DISTINCT KID_CATEGORY_DESC FROM DEMOGRAPHIC_RAW ;
+
+ALTER TABLE CAMPAIGN_DESC_NEW
+DROP COLUMN CAMPAIGN_DURATION;
+
+SELECT * FROM CAMPAIGN_DESC_NEW ;
+
+SELECT DATEDIFF(D,START_DATE,END_DATE) AS DURATION_DIFFERENCE FROM CAMPAIGN_DESC_NEW;
+
+ALTER TABLE CAMPAIGN_DESC_NEW
+ADD COLUMN CAM_DURATION INT ;
+
+UPDATE CAMPAIGN_DESC_NEW
+SET CAM_DURATION = DATEDIFF(DAY,START_DATE,END_DATE)
+WHERE CAMPAIGN = 24 ;
+
+UPDATE CAMPAIGN_DESC_NEW
+SET CAM_DURATION = DATEDIFF(DAY,START_DATE,END_DATE)
+WHERE CAMPAIGN BETWEEN 1 AND 30 ;
+
+SHOW TABLES;
+
+SELECT * FROM CAMPAIGN_DESC_NEW;
+COMMIT ;
+-
+CREATE TABLE CAMPAIGN_DESCRIPTION AS
+SELECT * FROM CAMPAIGN_DESC_NEW ;
+
+
+SELECT C.DESCRIPTION , SUM(T.SALES_VALUE) FROM CAMPAIGN_RAW C
+INNER JOIN TRANSACTION_NEW T 
+ON T.HOUSEHOLD_KEY = C.HOUSEHOLD_KEY 
+GROUP BY 1 
+ORDER BY 2 DESC;
+
+ 
+SELECT DISTINCT MARITAL_STATUS  FROM DEMOGRAPHIC_RAW;
+
+SELECT COUNT (DISTINCT COMMODITY_DESC) FROM PRODUCT_RAW ;
+SELECT MANUFACTURER , COUNT(SUB_COMMODITY_DESC) FROM PRODUCT_RAW 
+GROUP BY 1 
+ORDER BY 2 DESC;
+
+
+SELECT * FROM AGE_COUPON ;
+
+SELECT * FROM CAMPAIGN_DESCRIPTION ;
+SELECT * FROM TRANSACTION_NEW ;
+SELECT * FROM CAMPAIGN_RAW ;
+SELECT * FROM DEMOGRAPHIC ;
+SELECT * FROM PRODUCT_RAW;
+
+SELECT avg (trans_time)/60  FROM TRANSACTION_NEW ; 
+
+select sum(retail_disc) from transaction_new;
+
+select sum(coupon_disc) from transaction_new;
+
+SELECT ROUND(COUNT(DISTINCT C.COUPON_UPC)/COUNT(DISTINCT CR.COUPON_UPC)*100,2) AS PERCENTAGE_COUP FROM 
+COUPON_RAW C LEFT OUTER JOIN  COUPON_REDEMPT_NEW CR ON 
+C.COUPON_UPC = CR.COUPON_UPC;
+
+
+SELECT * FROM CAMPAIGN_DESCRIPTION ;
+SELECT * FROM TRANSACTION_NEW ;
+SELECT * FROM CAMPAIGN_RAW ;
+SELECT * FROM DEMOGRAPHIC ;
+SELECT * FROM PRODUCT_RAW;
+
+SELECT avg (trans_time)/60  FROM TRANSACTION_NEW ; 
+
+select sum(retail_disc) from transaction_new;
+
+select sum(coupon_disc) from transaction_new;
+
+SELECT ROUND(COUNT(DISTINCT C.COUPON_UPC)/COUNT(DISTINCT CR.COUPON_UPC)*100,2) AS PERCENTAGE_COUP FROM 
+COUPON_RAW C LEFT OUTER JOIN  COUPON_REDEMPT_NEW CR ON 
+C.COUPON_UPC = CR.COUPON_UPC;
+
+CREATE VIEW PER_COUP_RED AS 
+SELECT SUM(COUPON_REDEEMED)/SUM(COUPON_GIVEN)*100 AS PERC_COUP FROM COUPON_REDEMPTION ;
+
+CREATE VIEW HOUSE_SIZE_SALE AS 
+SELECT D.HOUSEHOLD_SIZE_DESC , SUM(T.SALES_VALUE) AS TOTAL_SALE FROM DEMOGRAPHIC_RAW D 
+INNER JOIN TRANSACTION_NEW T 
+ON D.HOUSEHOLD_KEY  = T.HOUSEHOLD_KEY 
+GROUP BY 1 
+ORDER BY 2 DESC;
+
+
+create or replace table total_month as
+select start_month - end_month as months_total
+from campaign_desc_new;
+
+create or replace table total_month as
+select start_month - end_month as months_total
+from campaign_desc_new;
+
+select * from total_month;
+
+----------- Creating Views -------------------------------------------------------------------
+CREATE OR REPLACE VIEW  PRODUCT_CAMPAIGN AS 
+SELECT CR.CAMPAIGN , COUNT(P.PRODUCT_ID) AS PRODUCT_COUNT  FROM PRODUCT_RAW P 
+INNER JOIN TRANSACTION_NEW T 
+ON P.PRODUCT_ID = T.PRODUCT_ID 
+INNER JOIN CAMPAIGN_RAW CR 
+ON T.HOUSEHOLD_KEY = CR.HOUSEHOLD_KEY
+GROUP BY 1;
+
+SELECT * FROM PRODUCT_CAMPAIGN 
+ORDER BY PRODUCT_COUNT DESC;
+
+
+CREATE OR REPLACE VIEW  MANU_SALES AS 
+SELECT P.MANUFACTURER , SUM(T.SALES_VALUE) AS TOTAL_SALES  FROM PRODUCT_RAW P  
+INNER  JOIN TRANSACTION_NEW T 
+ON P.PRODUCT_ID = T.PRODUCT_ID 
+GROUP BY 1 
+ORDER BY 2 DESC ; 
+
+CREATE OR REPLACE VIEW  MANU_SALES2 AS 
+SELECT P.MANUFACTURER , SUM(T.SALES_VALUE) AS TOTAL_SALES  FROM PRODUCT_RAW P  
+LEFT OUTER JOIN TRANSACTION_NEW T 
+ON P.PRODUCT_ID = T.PRODUCT_ID 
+GROUP BY 1 
+ORDER BY 2 DESC ;
+
+SELECT * FROM PRODUCT_RAW ;
+SELECT * FROM TRANSACTION_NEW T ;
+
+CREATE VIEW HOUSE_PROD AS 
+SELECT D.HOUSEHOLD_KEY , COUNT (P.PRODUCT_ID) AS PRODUCT_COUNT  FROM DEMOGRAPHIC_RAW D 
+LEFT OUTER JOIN TRANSACTION_NEW T 
+ON D.HOUSEHOLD_KEY = T.HOUSEHOLD_KEY 
+LEFT OUTER JOIN PRODUCT_RAW P
+ON P.PRODUCT_ID = T.PRODUCT_ID 
+GROUP BY 1 
+ORDER BY 2 DESC ;
+
+SELECT * FROM HOUSE_PROD ;
+
+CREATE VIEW COUPON_REDEMPTION AS 
+SELECT C.CAMPAIGN , COUNT(DISTINCT C.COUPON_UPC) AS COUPON_GIVEN, COUNT(DISTINCT  CR.COUPON_UPC) AS COUPON_REDEEMED FROM COUPON_RAW C
+LEFT OUTER JOIN COUPON_REDEMPT_NEW CR 
+ON CR.CAMPAIGN = C.CAMPAIGN
+GROUP BY 1 
+ORDER BY 3 DESC ;
+
+CREATE VIEW DEP_COUP As 
+SELECT P.DEPARTMENT , COUNT(DISTINCT C.COUPON_UPC) AS COUPON_GIVEN FROM PRODUCT_RAW P 
+INNER JOIN COUPON_RAW C 
+ON P.PRODUCT_ID = C.PRODUCT_ID 
+GROUP BY 1 
+ORDER BY 2 DESC ;
+
+SELECT * FROM DEP_COUP ;
+
+CREATE VIEW INCOME_COUP AS 
+SELECT D.INCOME_DESC , COUNT(DISTINCT C.COUPON_UPC) AS COUPON_REDEEMED FROM DEMOGRAPHIC_RAW D 
+INNER JOIN COUPON_REDEMPT_NEW C 
+ON D.HOUSEHOLD_KEY = C.HOUSEHOLD_KEY
+GROUP BY 1 
+ORDER BY 2 DESC ;
+
+SELECT * FROM INCOME_COUP ;
+
+CREATE VIEW AGE_COUPON AS 
+SELECT D.AGE_DESC , COUNT(DISTINCT C.COUPON_UPC) AS COUPON_REDEEMED FROM DEMOGRAPHIC_RAW D 
+INNER JOIN COUPON_REDEMPT_NEW C 
+ON D.HOUSEHOLD_KEY = C.HOUSEHOLD_KEY
+GROUP BY 1 
+ORDER BY 2 DESC ;
+
+CREATE VIEW PER_COUP_RED AS 
+SELECT SUM(COUPON_REDEEMED)/SUM(COUPON_GIVEN)*100 AS PERC_COUP FROM COUPON_REDEMPTION ;
+
+CREATE VIEW HOUSE_SIZE_SALE AS 
+SELECT D.HOUSEHOLD_SIZE_DESC , SUM(T.SALES_VALUE) AS TOTAL_SALE FROM DEMOGRAPHIC_RAW D 
+INNER JOIN TRANSACTION_NEW T 
+ON D.HOUSEHOLD_KEY  = T.HOUSEHOLD_KEY 
+GROUP BY 1 
+ORDER BY 2 DESC;
